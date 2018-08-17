@@ -11,6 +11,7 @@ const dbName = "gabbi-db";
 
 var app = express();
 
+// config stuff: https://expressjs.com/en/api.html#app.set
 app.set('views', path.join(__dirname, 'views'));
 app.set('view engine', 'hbs');
 
@@ -59,13 +60,53 @@ MongoClient.connect(mongodb_url,
                 console.log(result);
                 res.redirect('/list-quizes');
             });
+        })
 
+        router.post('/editQuiz', function (req, res, next) {
+            var editPopQuizForm = req.body;
+
+            var editPopQuiz = {
+                question: editPopQuizForm.question,
+                answers: [],
+                correctAnswer: editPopQuizForm.correctAnswer
+            }
+
+            editPopQuiz.answers.push({ selection: 'a', value: editPopQuizForm.answer1 })
+            editPopQuiz.answers.push({ selection: 'b', value: editPopQuizForm.answer2 })
+            editPopQuiz.answers.push({ selection: 'c', value: editPopQuizForm.answer3 })
+            editPopQuiz.answers.push({ selection: 'd', value: editPopQuizForm.answer4 })
+            
+            console.log("edited:", editPopQuiz);
+            console.log("body:", req.body);
+            
+            var oid = new ObjectId(editPopQuizForm.id);
+            quizCollection.update(
+                { _id: oid },
+                editPopQuiz
+            );
+            res.redirect('/list-quizes');
+            
         })
 
         router.get('/show-newQuizform', function (req, res, next) {
             res.render('newQuiz', {});
         })
 
+        router.get('/show-EditQuiz/:id', function (req, res, next) {
+            var oid = new ObjectId(req.params.id);
+            quizCollection.findOne({ _id: oid }, function (err, result) {
+                console.log(JSON.stringify(result));
+                res.render('editQuiz', { editQuiz: result });
+            })
+        })
+
+        router.get('/show-DeleteQuiz/:id', function (req, res, next) {
+            var oid = new ObjectId(req.params.id);
+            quizCollection.remove({ _id: oid }, function (err, result) {
+                console.log(JSON.stringify(result));
+                res.redirect('/list-quizes');
+            })
+        })
 
         router.get('/list-quizes', function (req, res, next) {
             quizCollection.find({}).project({ correctAnswer: 0 }).toArray(function (err, result) {
@@ -88,10 +129,10 @@ MongoClient.connect(mongodb_url,
             var isCorrect = false;
 
             console.log("ID", answer.id);
-            
+
             var oid = new ObjectId(answer.id);
-            quizCollection.findOne({ _id: oid }, function(err, result) {
-                
+            quizCollection.findOne({ _id: oid }, function (err, result) {
+
                 console.log(JSON.stringify(result));
                 if (result.correctAnswer === answer.answer) {
                     console.log("CORRECT");
