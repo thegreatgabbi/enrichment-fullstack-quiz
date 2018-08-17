@@ -7,31 +7,38 @@ const CHECK_ANSWER_API_URL = `${API_URL}check-answer`;
 
 prompt.start();
 
+var finalPopQuiz;
 request(QUIZ_API_URL, function (err, response, body) {
     var popQuiz = JSON.parse(body);
-    console.log(popQuiz.question + "\n");
-    console.log(popQuiz.answers.forEach(element => {
-        console.log(element.selection + ". " + element.value + "\n"); 
+    var randomPopQuiz = Math.floor(Math.random() * Math.floor(popQuiz.length));
+    console.log(randomPopQuiz);
+    finalPopQuiz = popQuiz[randomPopQuiz];
+    console.log(finalPopQuiz._id);
+    console.log(finalPopQuiz.question + "\n");
+    console.log(finalPopQuiz.answers.forEach(element => {
+        console.log(element.selection + ". " + element.value + "\n");
     }))
 })
 
-setTimeout(function() {
-    prompt.get(['answer'], function(err, result) {
+setTimeout(function () {
+    prompt.get(['answer'], function (err, result) {
 
-        if(err) {
+        if (err) {
             throw new Error('error in cli');
         }
         //console.log("Your answer: ", result.answer);
 
         var inputAnswer = {
-            answer: result.answer
+            answer: result.answer,
+            id: finalPopQuiz._id,
         }
         request({
             url: CHECK_ANSWER_API_URL,
             method: "POST",
             json: inputAnswer
-        }, function(err, resp, body) {
-            if (body.result) {
+        }, function (err, resp, body) {
+            console.log(body.result);
+            if (body.result === true) {
                 console.log("BINGO!");
             } else {
                 console.log("WRONG!!");
